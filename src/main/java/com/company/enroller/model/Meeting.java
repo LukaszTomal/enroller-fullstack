@@ -11,6 +11,7 @@ import java.util.Set;
 @Table(name = "meeting")
 public class Meeting {
 
+
     @Id
     @GeneratedValue(strategy = GenerationType.AUTO)
     private long id;
@@ -24,9 +25,11 @@ public class Meeting {
     @Column
     private String date;
 
-    @JsonIgnore
+
+    //    @JsonIgnore
     @ManyToMany(mappedBy = "meetings")
     Set<Participant> participants = new HashSet<>();
+
 
     public long getId() {
         return id;
