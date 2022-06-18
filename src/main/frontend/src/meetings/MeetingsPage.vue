@@ -6,7 +6,7 @@
                Brak zaplanowanych spotkań.
            </span>
     <h3 v-else>
-      Zaplanowane zajęcia ({{ meetings.length }})
+      Zaplanowane spotkania: ({{ meetings.length }})
     </h3>
 
     <meetings-list :meetings="meetings"
@@ -18,30 +18,88 @@
 </template>
 
 <script>
-    import NewMeetingForm from "./NewMeetingForm";
-    import MeetingsList from "./MeetingsList";
+import NewMeetingForm from "./NewMeetingForm";
+import MeetingsList from "./MeetingsList";
 
-    export default {
-        components: {NewMeetingForm, MeetingsList},
-        props: ['username'],
-        data() {
-            return {
-                meetings: []
-            };
-        },
-        methods: {
-            addNewMeeting(meeting) {
-                this.meetings.push(meeting);
-            },
-            addMeetingParticipant(meeting) {
-                meeting.participants.push(this.username);
-            },
-            removeMeetingParticipant(meeting) {
-                meeting.participants.splice(meeting.participants.indexOf(this.username), 1);
-            },
-            deleteMeeting(meeting) {
-                this.meetings.splice(this.meetings.indexOf(meeting), 1);
-            }
-        }
+export default {
+  mounted() {
+    this.$http.get('meetings')
+        .then((response) => {
+          console.log('Pobrano spotkania z sukcesem');
+          this.meetings = response.data;
+          console.log(JSON.stringify(this.meetings));
+        })
+        .catch(response => console.log('Błąd przy pobieraniu spotkań. Kod odpowiedzi: ' + response.status));
+  },
+  components: {NewMeetingForm, MeetingsList},
+  props: ['username'],
+  data() {
+    return {
+      meetings_data: []
+    };
+  },
+  computed: {
+    meetings: {
+      get() {
+        return this.meetings_data;
+      },
+      set(meetings) {
+        this.meetings_data = meetings;
+      }
     }
+  },
+  methods: {
+    fetchMeetings(){
+      this.$http.get('meetings')
+          .then(response => {
+            this.meetings = response.body;
+          })
+          .catch(response => {
+            console.log("nie powiodło się");
+          });
+
+    },
+    addNewMeeting(meeting) {
+      this.meetings.push(meeting);
+      this.$http.post('meetings', meeting)
+          .then(() => {
+            console.log('Meeting ' + meeting + ' dodano z powodzeniem.');
+            this.fetchMeetings();
+          })
+          .catch(response => console.log('Błąd przy tworzeniu spotkania. Kod odpowiedzi: ' + response.status));
+    },
+    addMeetingParticipant(meeting) {
+      meeting.participants.push(this.username);
+      this.$http.post('meetings/'+ meeting.id +'/participants', {login:this.username})
+          .then(response => {
+            console.log("zapisano");
+            this.fetchMeetings();
+          })
+          .catch(response => {
+            console.log("nie zapisano");
+          });
+    },
+    removeMeetingParticipant(meeting) {
+      meeting.participants.splice(meeting.participants.indexOf(this.username), 1);
+      this.$http.delete('meetings/'+ meeting.id + '/participants/' + this.username)
+          .then(response => {
+            console.log("usunięto");
+            this.fetchMeetings()
+          })
+          .catch(response => {
+            console.log("nie usunięto");
+          });
+    },
+    deleteMeeting(meeting) {
+      this.meetings.splice(this.meetings.indexOf(meeting), 1);
+      this.$http.delete('meetings/'+ meeting.id)
+          .then(response => {
+            console.log("usunięto");
+          })
+          .catch(response=>{
+            console.log("nie usunięto");
+          });
+    }
+  }
+}
 </script>
