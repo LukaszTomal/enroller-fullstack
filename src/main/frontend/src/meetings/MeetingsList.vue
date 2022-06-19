@@ -4,7 +4,6 @@
     <tr>
       <th>Nazwa spotkania</th>
       <th>Opis</th>
-      <th>Data</th>
       <th>Uczestnicy</th>
       <td></td>
     </tr>
